@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { copy, linkIcon, loader, tick } from "../assets";
+import { copy, linkIcon, loader, tick , volume_unmute , volume_mute } from "../assets";
 import { useLazyGetSummaryQuery } from "../services/article"
 
 const Demo = () => {
@@ -10,6 +10,7 @@ const Demo = () => {
 
   const [allArticles,setAllArticles] = useState([])
   const [copied, setCopied] = useState("");
+  const [isMuted, setIsMuted] = useState(true); // Initialize as muted
 
  // RTK lazy query
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
@@ -22,6 +23,11 @@ const Demo = () => {
     if (articlesFromLocalStorage) {
       setAllArticles(articlesFromLocalStorage)
     }
+
+    // // Read the summary when it becomes available
+    // if (article.summary) {
+    //   handleTextToSpeech(article.summary);
+    // }
     
   },[])
 
@@ -43,6 +49,46 @@ const Demo = () => {
     setCopied(copyURL)
     navigator.clipboard.writeText(copyURL)
     setTimeout(()=> setCopied(false),3000)
+  }
+
+  // Read Text
+  const handleTextToSpeech = (sum) => {
+    const synth = window.speechSynthesis;
+  
+    // Create a SpeechSynthesisUtterance
+    const article_summary = new SpeechSynthesisUtterance(sum);
+    
+    // Start reading the text
+    synth.speak(article_summary);
+
+    // Continuously check the isMuted state while reading
+    const checkMuteInterval = setInterval(() => {
+      if (isMuted) {
+        // If muted, cancel the speech synthesis
+        synth.cancel();
+        clearInterval(checkMuteInterval); // Stop checking
+      }
+    }, 1000); // Check every second (adjust as needed)
+  }
+
+  // Toggle mute/unmute
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    if (isMuted) {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+    } else {
+      handleTextToSpeech(article.summary);
+    }
+  }
+
+  // Toggle mute when click to another article
+  const toggleMuteNow = () => {
+    setIsMuted(!isMuted); 
+    if (isMuted) {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+    }
   }
 
   return (
@@ -83,10 +129,12 @@ const Demo = () => {
                 <img
                   src={copied === item.url ? tick : copy}
                   alt={copied === item.url ? "tick_icon" : "copy_icon"}
-                  className="w-[60%] h-[60%] object-contain mr-3"                
+                  className="w-[60%] h-[60%] object-contain"                
                 />
               </div>
-              <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate">
+              <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate"
+                 onClick={toggleMuteNow}
+              >
                 {item.url}
               </p>
             </div>
@@ -111,10 +159,13 @@ const Demo = () => {
               <h2 className='font-satoshi font-bold text-gray-600 text-xl'>
                 Article <span className='blue_gradient'>Summary</span>
               </h2>
-              <div className='summary_box'>
+              <div className='summary_box flex relative'>
                 <p className='font-inter font-medium text-sm text-gray-700'>
-                  {article.summary}
-                </p>
+                  {article.summary} 
+                </p>  
+                <span className="absolute top-[-15px] right-0">
+                  {isMuted ? <img src={volume_unmute} onClick={toggleMute}/> : <img src={volume_mute} onClick={toggleMute}/>}                          
+                </span>              
               </div>
             </div>
           )

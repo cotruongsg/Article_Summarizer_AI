@@ -11,7 +11,7 @@ const Hero = () => {
                     onClick={()=> window.open('https://www.linkedin.com/in/truongduongit')}
                     className='black_btn'
             >
-                LinkedIn             
+                Truong Duong's LinkedIn             
             </button>
         </nav>
 
